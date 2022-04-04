@@ -10,7 +10,7 @@ Description: Spatio-temporal kriging for oceanographic data with default univers
 License: MIT
 URL: https://github.com/Gi-Seop/STK
 Encoding: UTF-8
-Depends: R (>= 3.1.0)
+Depends: R (>= 3.1.0), data.table, lubridate, tidyverse
 Imports: utils, stats, graphics, methods, base, data.table, FNN, lattice, lubridate, raster, rasterVis, Rcpp, RcppEigen, RColorBrewer, tidyverse 
 Linkingto: Rcpp
 RoxygenNote: 7.1.2
