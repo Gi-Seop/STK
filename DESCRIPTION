@@ -1,19 +1,21 @@
 Package: STK
 Type: Package
 Title: Spatio-Temporal Kriging for Oceanographic Data
-Version: 0.1.0
+Version: 0.1.2
 Authors@R: c(person(given = "GiSeop", 
                     family = "Lee", 
                     role = c("aut", "cre"),
                     email = "freelgs7@kiost.ac.kr"))
+Maintainer: GiSeop Lee <freelgs7@kiost.ac.kr>
 Description: Spatio-temporal kriging for 4-dimensional(xyzt) oceanographic data.
 License: MIT
 URL: https://github.com/Gi-Seop/STK
 Encoding: UTF-8
-Depends: R (>= 3.1.0), data.table, lubridate, tidyverse
-Imports: utils, stats, graphics, methods, base, data.table, FNN, lattice, latticeExtra, lubridate, raster, rasterVis, Rcpp, RcppEigen, RColorBrewer, tidyverse 
+Depends: R (>= 3.1.0), data.table, tidyverse, lubridate, Rcpp, RcppEigen
+Imports: tidyverse, utils, stats, graphics, methods, base, data.table, FNN, lattice, latticeExtra, lubridate, raster, rasterVis, Rcpp, RcppEigen, RColorBrewer
 Linkingto: Rcpp
 RoxygenNote: 7.1.2
 LinkingTo: 
     Rcpp,
     RcppEigen
+LazyData: true

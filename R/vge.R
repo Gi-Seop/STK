@@ -141,3 +141,119 @@ vge_st <- function(xi, s_var, t_var, max_range, lag_buffer, overlap_factor, plot
 }
 
 
+
+# anisotropic experimental variogram function for xyzt
+vge_aniso <- function(xi, s_var, val, aniso = NULL,
+                      max_range, lag_buffer, overlap_factor,
+                      valid_n = 30,
+                      plot = TRUE){
+
+
+  aniso <- aniso
+  aniso_dist <- paste0("dist_", aniso)
+  aniso_cut <- paste0("cut_", aniso)
+  aniso_lag <- paste0("lag_", aniso)
+  aniso_conf <- paste0(c("conf_cov_l_", "conf_cov_u_"),
+                       rep(aniso, each = 2))
+
+  sample_var <- var(xi[, val])
+  pair_val <- comb_2(xi[, val])
+
+  # add variables[dist_x, y, z] on the exist table
+  pair_val[, (aniso_dist) :=
+             lapply(aniso, function(x) as.numeric(dist(xi[, x])))]
+
+  # lag_d_s <- lag_dist(pair_val$dist_x, buffer = lag_buffer, m_factor = overlap_factor)
+
+  lag_d_list <- lapply(aniso_dist,
+                       function(x){
+
+                         lag_dist(pair_val[[x]],
+                                  buffer = lag_buffer,
+                                  m_factor = overlap_factor)
+
+                       })
+
+  names(lag_d_list) <- aniso_dist
+
+  pair_val[, (aniso_cut) :=
+             lapply(aniso_dist,
+                    function(x){
+                      cut(pair_val[[x]],
+                          c(unique(unlist(lag_d_list[[x]])),
+                            ceiling(max(pair_val[[x]])) + lag_buffer),
+                          right = F)
+                    })
+  ]
+
+
+  pair_val[, n := .(n = length(V1)),
+           keyby = aniso_cut]
+
+
+  # invalid(= n group <= 30) pair filtering
+  invalid_pair <- which(pair_val$n <= 10)
+
+  # experimental variogram calculation
+  vg_e = pair_val[-invalid_pair, .(
+    cov = cov(V1, V2, use = "everything"),
+    # conf_int_cor = cor.test(V1, V2)$conf.int,
+    sd_x = sd(V1, na.rm = T),
+    sd_y = sd(V2, na.rm = T)),
+    keyby = aniso_cut]
+  vg_e[, gamma := sample_var - cov]
+  vg_e[, conf_int_gamma := sample_var - sd_x * sd_y]
+
+
+  vg_e[, (aniso_lag) :=
+         lapply(.SD, function(x){
+           mean(
+             as.numeric(
+               gsub("\\[|\\)", "", unlist(str_split(x, ",")))
+             )
+           )
+         }),
+       .SDcols = aniso_cut,
+       keyby = aniso_cut]
+
+
+  # covariance confidence interval(Not Recommended)
+  agg_cols <- c(aniso_cut, "cov", "sd_x", "sd_y", aniso_lag)
+  vg_e[, (aniso_conf) :=
+         lapply(.SD, function(x){
+           c(x[1], x[2])
+         }), .SDcols = "conf_int_gamma",
+       keyby = agg_cols]
+
+
+  # confirm empirical variogram
+  vg_e_lim <- vg_e %>%
+    filter(if_all(starts_with("lag_"), ~ . <= max_range * max(vg_e$lag_x)))
+
+
+  # plotting option
+  if(plot == TRUE){
+
+    op <- par(no.readonly = T)
+    par(mfrow = c(2, 2))
+
+    for(pp in aniso_lag){
+
+      plot(vg_e_lim[[pp]], vg_e_lim$gamma, pch = 16,
+           main = paste0("Gamma For ", pp))
+
+    }
+
+    par(op)
+
+  }
+
+
+  return(vg_e_lim)
+
+
+}
+
+
+
+
